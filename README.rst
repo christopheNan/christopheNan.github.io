@@ -23,7 +23,8 @@ Programmation Python
 --------------------
 
 Avec un Raspberry Pi :
-`Surveillance de l'ouverture d'une porte de garage <../../garage>`_.
+`Surveillance de l'ouverture d'une porte de garage
+</christopheNan/garage/garage>`_.
 
 Avec un traceur GPS (Navin MiniHomer) :
 `Lecture d'un traceur GPS victime du bug de l'an 2019 (à venir) <#>`_.
