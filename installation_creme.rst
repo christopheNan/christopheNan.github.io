@@ -4,8 +4,8 @@ Installation du CRM Creme
 Installation sur un Raspberry Pi 3
 ----------------------------------
 
-L'installation se fait classiquement et est expliquée
-`sur le forum de Creme <https://www.cremecrm.com/forum/showthread.php?tid=126>`_.
+L'installation se fait classiquement et est expliquée sur
+`le forum de Creme`_.
 J'apporte quelques précisions supplémentaires.
 
 Prérequis
@@ -40,10 +40,18 @@ Installer creme dans un environnement virtuel de cet utilisateur :
 
 .. code-block:: bash
 
-    creme@raspberry:~ $ mkdir -p ~/.Envs/creme && python3 -m venv ~/.Envs/creme
-    creme@raspberry:~ $ . ~/.Envs/creme/bin/activate
-    (creme)creme@raspberry:~ $ hg clone https://bitbucket.org/hybird/creme_crm-2.02.0
+    creme@raspberry:~ $ mkdir -p ~/.Envs/creme21 && python3 -m venv ~/.Envs/creme21
+    creme@raspberry:~ $ ln -s ~/.Envs/creme21 ~/.Envs/creme  # pour être indépendant de la version
+    creme@raspberry:~ $ source ~/.Envs/creme/bin/activate
+    (creme)creme@raspberry:~ $ hg clone https://bitbucket.org/hybird/creme_crm-2.1
     ...
+
+Pour Creme aussi, créer un lien symbolique indépendant de la version pour
+faciliter les mises à jour et migrations futures :
+
+.. code-block:: bash
+
+    (creme)creme@raspberry:~ $ ln -s creme_crm-2.1 creme_crm
 
 Fichiers media
 **************
@@ -122,11 +130,11 @@ Attention, je n'ai pu faire fonctionner nginx qu'en configurant
 
             # Django media
             location /media  {
-                alias /home/creme/creme_crm-2.0/creme/media;  # Creme media files
+                alias /home/creme/creme_crm/creme/media;  # Creme media files
             }
 
             location /static_media {
-                alias /home/creme/creme_crm-2.0/creme/media/static ; # Creme static files
+                alias /home/creme/creme_crm/creme/media/static ; # Creme static files
             }
 
             # Tout ce qui n'est pas media vers le serveur django.
@@ -203,7 +211,7 @@ Installer uwsgi pour servir les fichiers django :
     # creme_uwsgi.ini file
     [uwsgi]
     ~
-    chdir           = /home/creme/creme_crm-2.0
+    chdir           = /home/creme/creme_crm
     module          = creme.wsgi
     home            = /home/creme/.Envs/creme
     ~
@@ -214,6 +222,24 @@ Installer uwsgi pour servir les fichiers django :
     vacuum          = true
     safe-pidfile    = /run/creme/uwsgi.pid
 
+S'assurer de disposer d'un fichier `/home/creme/creme_crm/creme/wsgi.py`
+(c'est le fichier *module* du fichier de configuration ci-dessus). S'il n'est
+pas présent, voici le contenu du mien :
+
+.. code-block:: python
+
+    import os
+    from os.path import dirname, abspath
+    import sys
+
+
+    CREME_ROOT = dirname(abspath(__file__))
+    sys.path.append(CREME_ROOT)
+
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'creme.settings'
+
+    from django.core.wsgi import get_wsgi_application
+    application = get_wsgi_application()
 
 
 Configuration de l'authentification par certificat pour les clients
@@ -251,17 +277,33 @@ Dans le fichier ``creme/settings.py``, ajouter les lignes suivantes
 Module d'authentification personnalisé
 **************************************
 
-Ajouter un module d'authentification personnalisé. Celui-ci hérite
-de RemoteUserBackend pour lire les informations dans ``REMOTE_USER``. La
-fonction ``clean_username`` est modifiée pour extraire le nom d'utilisateur
-à partir de ``REMOTE_USER`` (qui contient le DN du certificat, voir la
-section `Nginx`_). La
-fonction ``has_perm`` est tirée de la fonction standard d'authentification
-de Creme :
+Ajouter un module d'authentification personnalisé. Vous pouvez placer ce
+fichier dans le répertoire où vous avez installé creme et l'appeler par
+exemple ``monauth.py``. Dans le fichier ``creme/local_settings.py``, rajouter
+alors la variable suivante :
+
+.. code-block:: python
+
+    AUTHENTICATION_BACKENDS = ('monauth.PropagationBackend',)
+
+Ce module hérite de RemoteUserBackend pour lire les informations dans
+``REMOTE_USER``. La fonction ``clean_username`` est modifiée pour extraire le
+nom d'utilisateur à partir de ``REMOTE_USER`` (qui contient le DN du
+certificat, voir la section `Nginx`_).
+La variable de classe ``create_unknown_user`` est placée à ``False`` pour ne
+pas créer d'utilisateur dans la base automatiquement. Je n'ai pas testé de la
+placer à ``True``, ce qui pourrait fonctionner car `Nginx`_ est configuré
+pour n'accepter que des clients qui ont des certificats.
+La fonction ``has_perm`` est tirée de la fonction standard d'authentification
+de Creme (dans le fichier
+``/home/creme/creme_crm/creme/creme_core/auth/backend.py``) et dépend donc de
+votre version installée de Creme (ici 2.1) :
 
 .. code-block:: python
 
     from creme.creme_core.auth.entity_credentials import EntityCredentials
+    from creme.creme_core.auth import SUPERUSER_PERM
+
     from django.contrib.auth.backends import RemoteUserBackend
 
     _ADD_PREFIX = 'add_'
@@ -269,35 +311,33 @@ de Creme :
 
 
     class PropagationBackend(RemoteUserBackend):
-      supports_object_permissions = True
-      create_unknown_user = False
+        supports_object_permissions = True
+        create_unknown_user = False
 
-      def clean_username(self, remote_user):
-          return remote_user.split('/')[-1].split('=')[-1]
+        def clean_username(self, remote_user):
+            return remote_user.split('/')[-1].split('=')[-1]
 
-      def has_perm(self, user_obj, perm, obj=None):
-          if obj is not None:
-              return EntityCredentials(user_obj, obj).has_perm(perm)
+        def has_perm(self, user_obj, perm, obj=None):
+            if obj is not None:
+                return EntityCredentials(user_obj, obj).has_perm(perm)
 
-          if user_obj.role is not None:
-              app_name, dot, action_name = perm.partition('.')
+            if user_obj.role is not None:
+                app_name, dot, action_name = perm.partition('.')
 
-              if not action_name:
-                  # if app_name == 'my_page':  # NB: for side menu
-                  #     return True
+                if not action_name:
+                    return user_obj.is_superuser if app_name == SUPERUSER_PERM else \
+                           user_obj.has_perm_to_access(app_name)
 
-                  return user_obj.has_perm_to_access(app_name)
+                if action_name == 'can_admin':
+                    return user_obj.has_perm_to_admin(app_name)
 
-              if action_name == 'can_admin':
-                  return user_obj.has_perm_to_admin(app_name)
+                if action_name.startswith(_ADD_PREFIX):
+                    return user_obj.role.can_create(app_name, action_name[len(_ADD_PREFIX):])
 
-              if action_name.startswith(_ADD_PREFIX):
-                  return user_obj.role.can_create(app_name, action_name[len(_ADD_PREFIX):])
+                if action_name.startswith(_EXPORT_PREFIX):
+                    return user_obj.role.can_export(app_name, action_name[len(_EXPORT_PREFIX):])
 
-              if action_name.startswith(_EXPORT_PREFIX):
-                  return user_obj.role.can_export(app_name, action_name[len(_EXPORT_PREFIX):])
-
-          return False
+            return False
 
 Voilà, il ne reste plus qu'à lancer django :
 
@@ -305,3 +345,7 @@ Voilà, il ne reste plus qu'à lancer django :
 
     pi@raspberry:~ $ sudo systemctl start uwsgi.service
     pi@raspberry:~ $ sudo systemctl start nginx.service
+
+.. _le forum de Creme: https://www.cremecrm.com/forum/showthread.php?tid=126
+
+
