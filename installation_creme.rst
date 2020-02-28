@@ -51,7 +51,7 @@ faciliter les mises à jour et migrations futures :
 
 .. code-block:: bash
 
-    (creme)creme@raspberry:~ $ ln -s creme_crm-2.1 creme_crm
+    creme@raspberry:~ $ ln -s ~/creme_crm-2.1 ~/creme_crm
 
 Fichiers media
 **************
@@ -61,7 +61,7 @@ fichiers media optimisés :
 
 .. code-block:: bash
 
-    (creme)creme@raspberry:~ $ python manage.py generatemedia
+    (creme)creme@raspberry:~/creme_crm $ python manage.py generatemedia
 
 
 Nginx
@@ -255,7 +255,7 @@ uniquement des utilisateurs déjà existants.
 Middlewares
 ***********
 
-Modifier les middlewares pour authentifier automatiquement à partir de la
+Modifions les middlewares pour authentifier automatiquement à partir de la
 variable ``REMOTE_USER`` dans les entêtes de la requête web. Dans le
 fichier ``creme/local_settings.py``, rajouter la variable suivante :
 
@@ -349,3 +349,141 @@ Voilà, il ne reste plus qu'à lancer django :
 .. _le forum de Creme: https://www.cremecrm.com/forum/showthread.php?tid=126
 
 
+Installation d'une version pour pré-production
+==============================================
+
+Afin de tester une nouvelle version de creme avant sa mise en production,
+j'ai mis en place la configuration suivante.
+
+liens symboliques pré-production
+--------------------------------
+Nous avons déjà mis en place des liens symboliques pour la production. Mettons
+ceux pour la pré-production (supposons pour une version 2.1 de creme) pour
+l'environnement virtuel Python et creme.
+
+.. code-block:: bash
+
+    creme@raspberry:~ $ ln -s ~/.Envs/creme21 ~/.Envs/creme_preprod
+    creme@raspberry:~ $ source ~/.Envs/creme_preprod/bin/activate
+    (creme_preprod)creme@raspberry:~ $ ln -s creme_crm-2.1 creme_preprod
+
+
+Modification des fichiers de configuration
+------------------------------------------
+
+Je garde un seul frontal nginx, mais qui dessert deux uwsgi. Le site de
+pré-production a la même adresse mais est préfixé par `preprod/`. Il faut donc
+rajouter des sections `location` au fichier de configuration de nginx :
+
+.. code-block:: bash
+
+    creme@raspberry:~ $ cat /home/creme/nginx/nginx.conf
+    ...
+    # section à insérer dans la zone http
+        upstream django_preprod {
+            server unix:///home/creme/creme_preprod.sock; # for a file socket
+        }
+    # ...
+
+    # sections à insérer dans la zone server
+
+       # Pre-production site
+        location /preprod/media  {
+            alias /home/creme/creme_preprod/creme/media;
+        }
+
+        location /preprod/static_media {
+            alias /home/creme/creme_preprod/creme/media/static;
+        }
+
+        # Finally, send all non-media requests to the Django server.
+        location /preprod/ {
+            uwsgi_pass  django_preprod;
+            include     /home/creme/nginx/uwsgi_params.conf;
+        }
+
+        # Production site
+        location /media  {
+            alias /home/creme/creme_preprod/creme/media;
+        }
+
+Il faut dupliquer le fichier `uwsgi/creme_uwsgi.ini` vers
+`uwsgi/creme_uwsgi_preprod.conf` et modifier le contenu de ce nouveau fichier
+comme ceci :
+
+.. code-block:: bash
+
+    creme@raspberry:~ $ cat /home/creme/uwsgi/creme_uwsgi_preprod.ini
+    # creme_uwsgi_preprod.ini file
+    [uwsgi]
+    ~
+    chdir           = /home/creme/creme_preprod
+    module          = creme.wsgi
+    home            = /home/creme/.Envs/creme_preprod
+    ~
+    master          = true
+    processes       = 5
+    socket          = /home/creme/creme_preprod.sock
+    chmod-socket    = 666
+    vacuum          = true
+    safe-pidfile    = /run/creme/uwsgi_preprod.pid
+
+Modification de creme/django
+----------------------------
+
+Modifions creme/django pour utiliser un préfixe `preprod/` dans les urls. Dans
+le fichier `creme/local_settings.py`, on ajoute les lignes suivantes :
+
+.. code-block:: bash
+
+    creme@raspberry:~ $ tail -n 8 /home/creme/creme_preprod/creme/local_settings.py
+    # For pre-production usage only
+    URL_PREFIX = 'preprod/'
+    MEDIA_URL = 'http://127.0.0.1:8000/{prefix}media/'.format(prefix=URL_PREFIX)
+    PRODUCTION_MEDIA_URL = '/{prefix}static_media/'.format(prefix=URL_PREFIX)
+
+    if URL_PREFIX:
+        DEBUG = True
+
+Ensuite, modifions le fichier `creme/urls.py` pour rajouter le préfixe à toutes
+les urls :
+
+.. code-block:: bash
+
+    creme@raspberry:~ $ tail -n 5 /home/creme/creme_preprod/creme/local_settings.py
+
+    # Ne pas oublier d'ajouter l'import de la fonction path du module django.urls
+    if settings.URL_PREFIX:
+        urlpatterns = [path(r'{prefix}/'.format(prefix=settings.URL_PREFIX), include(urlpatterns))]
+
+
+Regénération des fichiers média
+-------------------------------
+
+Prenons en compte les modifications de la configuration :
+
+.. code-block:: bash
+
+    (creme_preprod)creme@raspberry:~/creme_preprod $ python manage.py generatemedia
+
+
+La version pré-production de creme doit être fonctionnelle. Il n'y a plus
+qu'à tester.
+
+Passage en production
+---------------------
+Le passage en production se fait en basculant les liens symboliques vers les
+versions des environnements virtuels et de creme :
+
+.. code-block:: bash
+
+    creme@raspberry:~ $ rm ~/creme_crm ~/.Envs/creme
+    creme@raspberry:~ $ ln -s ~/.Envs/creme21 ~/.Envs/creme
+    creme@raspberry:~ $ ln -s ~/creme_crm-2.1 ~/creme_crm
+
+Ensuite, relancer les services.
+
+Attention toutefois à la base de données : la base de production et celle de
+pré-production sont différentes. Si la production et la pré-production ne
+sont pas dans la même version de creme, il faudra faire une migration. Si les
+versions sont les mêmes, une copie de la base de production doit suffire.
