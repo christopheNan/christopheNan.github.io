@@ -1,9 +1,6 @@
-Ma domotique et mes outils pour le sport
-========================================
+# Ma domotique et mes outils pour le sport
 
-
-Configurations
----------------
+## Configurations du Raspberry Pi
 
 Le Raspberry Pi est un formidable outil qui peut (presque) tout faire, même
 si les performances réseau sont plutôt limitées.
@@ -15,11 +12,11 @@ La configuration d'un serveur web utilisant des certificats clients pour
 l'authentification est très rarement expliquée. J'espère que ce petit guide
 aidera ceux qui veulent utiliser cette option plus sécurisée et plus
 conviviale que les mots de passe.
+
 [Installation du CRM Creme sur un Raspberry Pi 3 avec utilisation de
 certificats clients pour l'authentification automatique](./installation_creme).
 
-Programmation Python
---------------------
+# Programmation Python
 
 Avec un Raspberry Pi :
 [Surveillance de l'ouverture d'une porte de garage](https://github.com/christopheNan/garage).
