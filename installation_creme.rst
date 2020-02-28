@@ -252,6 +252,14 @@ Je suppose dans ce guide que les comptes django des utilisateurs ont été
 préalablement créés et que l'authentification concerne uniquement donc
 uniquement des utilisateurs déjà existants.
 
+Ajout de l'application mobile
+*****************************
+
+L'application `mobile` est désactivée par défaut dans creme. Il convient de
+l'activer avant de faire la migration de la base de données et la génération
+des medias. Pour l'activer, dans le fichier `creme/settings.py`,
+supprimer le caractère croisillon devant `creme.mobile`.
+
 Middlewares
 ***********
 
