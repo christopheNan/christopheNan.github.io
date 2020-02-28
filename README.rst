@@ -1,5 +1,5 @@
-Ma domotique et mon sport
-=========================
+Ma domotique et mes outils pour le sport
+========================================
 
 
 Configurations

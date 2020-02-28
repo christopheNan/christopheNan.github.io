@@ -4,8 +4,7 @@ Installation d'un raspberry Pi 3
 Installation d'une distribution de base sans écran ni clavier
 -------------------------------------------------------------
 
-Tout est expliqué
-`ici <https://raspbian-france.fr/raspberry-pi-sans-ecran-sans-clavier/>`_
+Tout est expliqué sur `le site de raspbian`_
 mais je rappelle quelques points.
 
 - après avoir copié la distribution sur une carte SD, créer un fichier
@@ -68,10 +67,13 @@ et par exemple :
 
 Installation de log2ram
 -------------------------
-`log2ram <https://github.com/azlux/log2ram>`_ permet d'écrire les logs en RAM
+log2ram_ permet d'écrire les logs en RAM
 et donc d'économiser la carte SD.
 
 Attention : vos logs peuvent être saturés si votre machine ouvre des ports
 sur Internet. Le fichier btmp, qui stocke tous les échecs d'authentification,
 peut saturer votre ramdisk et empêcher le fonctionnement correct de la
 machine.
+
+.. _le site de raspbian: https://raspbian-france.fr/raspberry-pi-sans-ecran-sans-clavier/
+.. _log2ram: https://github.com/azlux/log2ram
