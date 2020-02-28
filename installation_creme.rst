@@ -245,8 +245,8 @@ pas présent, voici le contenu du mien :
 Configuration de l'authentification par certificat pour les clients
 ===================================================================
 
-configuration de Django
------------------------
+configuration de Creme / Django
+-------------------------------
 
 Je suppose dans ce guide que les comptes django des utilisateurs ont été
 préalablement créés et que l'authentification concerne uniquement donc
@@ -481,7 +481,20 @@ versions des environnements virtuels et de creme :
     creme@raspberry:~ $ ln -s ~/.Envs/creme21 ~/.Envs/creme
     creme@raspberry:~ $ ln -s ~/creme_crm-2.1 ~/creme_crm
 
-Ensuite, relancer les services.
+En enlevant la configuration de pré-production des fichiers de configuration,
+notamment la variable `URL_PREFIX` de `local_settings.py`.
+
+Prenons en compte les modifications de la configuration dans les fichiers
+media :
+
+.. code-block:: bash
+
+    creme@raspberry:~/creme_crm $ source ../../.Envs/creme/bin/activate
+    (creme)creme@raspberry:~/creme_crm $ python manage.py generatemedia
+
+
+La version « production » de creme doit être maintenant fonctionnelle.
+il suffit donc de relancer les services avec `systemctl`.
 
 Attention toutefois à la base de données : la base de production et celle de
 pré-production sont différentes. Si la production et la pré-production ne
