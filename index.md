@@ -16,7 +16,7 @@ l'authentification est très rarement expliquée. J'espère que ce petit guide
 aidera ceux qui veulent utiliser cette option plus sécurisée et plus
 conviviale que les mots de passe.
 [Installation du CRM Creme sur un Raspberry Pi 3 avec utilisation de
-certificats clients pour l'authentification automatique](./installation_creme.rst).
+certificats clients pour l'authentification automatique](./installation_creme.md).
 
 Programmation Python
 --------------------
