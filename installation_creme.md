@@ -4,9 +4,9 @@ Installation du CRM Creme
 Installation sur un Raspberry Pi 3
 ----------------------------------
 
-L\'installation se fait classiquement et est expliquée sur [le forum de
+L'installation se fait classiquement et est expliquée sur [le forum de
 Creme](https://www.cremecrm.com/forum/showthread.php?tid=126).
-J\'apporte quelques précisions supplémentaires.
+J'apporte quelques précisions supplémentaires.
 
 ### Prérequis
 
@@ -16,7 +16,7 @@ installer mercurial, python3, pyhon3-dev, openjdk, libopenjp2 :
 pi@raspberry:~ $ sudo apt-get install mercurial python3-venv python3-dev openjdk-8-jdk libopenjp2-7
 ```
 
-### Création d\'un utilisateur particulier
+### Création d'un utilisateur particulier
 
 Pour le service web, avec les répertoires utiles pour les différentes
 applications :
@@ -63,7 +63,7 @@ fichiers media optimisés :
 
 Installer nginx en frontal web et pour gérer le SSL.
 
-Attention, je n\'ai pu faire fonctionner nginx qu\'en configurant
+Attention, je n'ai pu faire fonctionner nginx qu'en configurant
 `accept_mutex` sur `off` sur mon raspberry. :
 
 ``` {.bash}
@@ -214,9 +214,9 @@ vacuum          = true
 safe-pidfile    = /run/creme/uwsgi.pid
 ```
 
-S\'assurer de disposer d\'un fichier
-[/home/creme/creme\_crm/creme/wsgi.py]{.title-ref} (c\'est le fichier
-*module* du fichier de configuration ci-dessus). S\'il n\'est pas
+S'assurer de disposer d'un fichier
+`[/home/creme/creme\_crm/creme/wsgi.py` (c'est le fichier
+*module* du fichier de configuration ci-dessus). S'il n'est pas
 présent, voici le contenu du mien :
 
 ``` {.python}
@@ -234,23 +234,23 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 ```
 
-Configuration de l\'authentification par certificat pour les clients
+Configuration de l'authentification par certificat pour les clients
 ====================================================================
 
 configuration de Creme / Django
 -------------------------------
 
 Je suppose dans ce guide que les comptes django des utilisateurs ont été
-préalablement créés et que l\'authentification concerne uniquement donc
+préalablement créés et que l'authentification concerne uniquement donc
 uniquement des utilisateurs déjà existants.
 
-### Ajout de l\'application mobile
+### Ajout de l'application mobile
 
-L\'application [mobile]{.title-ref} est désactivée par défaut dans
-creme. Il convient de l\'activer avant de faire la migration de la base
-de données et la génération des medias. Pour l\'activer, dans le fichier
-[creme/settings.py]{.title-ref}, supprimer le caractère croisillon
-devant [creme.mobile]{.title-ref}.
+L'application `mobile` est désactivée par défaut dans
+creme. Il convient de l'activer avant de faire la migration de la base
+de données et la génération des medias. Pour l'activer, dans le fichier
+`creme/settings.py`, supprimer le caractère croisillon
+devant `creme.mobile`.
 
 ### Middlewares
 
@@ -274,10 +274,10 @@ Dans le fichier `creme/settings.py`, ajouter les lignes suivantes
 MIDDLEWARE = MIDDLEWARE + LOCAL_MIDDLEWARE
 ```
 
-### Module d\'authentification personnalisé
+### Module d'authentification personnalisé
 
-Ajouter un module d\'authentification personnalisé. Vous pouvez placer
-ce fichier dans le répertoire où vous avez installé creme et l\'appeler
+Ajouter un module d'authentification personnalisé. Vous pouvez placer
+ce fichier dans le répertoire où vous avez installé creme et l'appeler
 par exemple `monauth.py`. Dans le fichier `creme/local_settings.py`,
 rajouter alors la variable suivante :
 
@@ -287,14 +287,14 @@ AUTHENTICATION_BACKENDS = ('monauth.PropagationBackend',)
 
 Ce module hérite de RemoteUserBackend pour lire les informations dans
 `REMOTE_USER`. La fonction `clean_username` est modifiée pour extraire
-le nom d\'utilisateur à partir de `REMOTE_USER` (qui contient le DN du
+le nom d'utilisateur à partir de `REMOTE_USER` (qui contient le DN du
 certificat, voir la section [Nginx](#nginx)). La variable de classe
 `create_unknown_user` est placée à `False` pour ne pas créer
-d\'utilisateur dans la base automatiquement. Je n\'ai pas testé de la
+d'utilisateur dans la base automatiquement. Je n'ai pas testé de la
 placer à `True`, ce qui pourrait fonctionner car [Nginx](#nginx) est
-configuré pour n\'accepter que des clients qui ont des certificats. La
+configuré pour n'accepter que des clients qui ont des certificats. La
 fonction `has_perm` est tirée de la fonction standard
-d\'authentification de Creme (dans le fichier
+d'authentification de Creme (dans le fichier
 `/home/creme/creme_crm/creme/creme_core/auth/backend.py`) et dépend donc
 de votre version installée de Creme (ici 2.1) :
 
@@ -338,25 +338,25 @@ class PropagationBackend(RemoteUserBackend):
         return False
 ```
 
-Voilà, il ne reste plus qu\'à lancer django :
+Voilà, il ne reste plus qu'à lancer django :
 
 ``` {.bash}
 pi@raspberry:~ $ sudo systemctl start uwsgi.service
 pi@raspberry:~ $ sudo systemctl start nginx.service
 ```
 
-Installation d\'une version pour pré-production
+Installation d'une version pour pré-production
 ===============================================
 
 Afin de tester une nouvelle version de creme avant sa mise en
-production, j\'ai mis en place la configuration suivante.
+production, j'ai mis en place la configuration suivante.
 
 liens symboliques pré-production
 --------------------------------
 
 Nous avons déjà mis en place des liens symboliques pour la production.
 Mettons ceux pour la pré-production (supposons pour une version 2.1 de
-creme) pour l\'environnement virtuel Python et creme.
+creme) pour l'environnement virtuel Python et creme.
 
 ``` {.bash}
 creme@raspberry:~ $ ln -s ~/.Envs/creme21 ~/.Envs/creme_preprod
@@ -369,8 +369,8 @@ Modification des fichiers de configuration
 
 Je garde un seul frontal nginx, mais qui dessert deux uwsgi. Le site de
 pré-production a la même adresse mais est préfixé par
-[preprod/]{.title-ref}. Il faut donc rajouter des sections
-[location]{.title-ref} au fichier de configuration de nginx :
+`preprod/`. Il faut donc rajouter des sections
+`location` au fichier de configuration de nginx :
 
 ``` {.bash}
 creme@raspberry:~ $ cat /home/creme/nginx/nginx.conf
@@ -404,8 +404,8 @@ creme@raspberry:~ $ cat /home/creme/nginx/nginx.conf
     }
 ```
 
-Il faut dupliquer le fichier [uwsgi/creme\_uwsgi.ini]{.title-ref} vers
-[uwsgi/creme\_uwsgi\_preprod.conf]{.title-ref} et modifier le contenu de
+Il faut dupliquer le fichier `uwsgi/creme\_uwsgi.ini` vers
+`uwsgi/creme\_uwsgi\_preprod.conf` et modifier le contenu de
 ce nouveau fichier comme ceci :
 
 ``` {.bash}
@@ -428,8 +428,8 @@ safe-pidfile    = /run/creme/uwsgi_preprod.pid
 Modification de creme/django
 ----------------------------
 
-Modifions creme/django pour utiliser un préfixe [preprod/]{.title-ref}
-dans les urls. Dans le fichier [creme/local\_settings.py]{.title-ref},
+Modifions creme/django pour utiliser un préfixe `preprod/`
+dans les urls. Dans le fichier `creme/local\_settings.py`,
 on ajoute les lignes suivantes :
 
 ``` {.bash}
@@ -443,7 +443,7 @@ if URL_PREFIX:
     DEBUG = True
 ```
 
-Ensuite, modifions le fichier [creme/urls.py]{.title-ref} pour rajouter
+Ensuite, modifions le fichier `creme/urls.py` pour rajouter
 le préfixe à toutes les urls :
 
 ``` {.bash}
@@ -463,8 +463,8 @@ Prenons en compte les modifications de la configuration :
 (creme_preprod)creme@raspberry:~/creme_preprod $ python manage.py generatemedia
 ```
 
-La version pré-production de creme doit être fonctionnelle. Il n\'y a
-plus qu\'à tester.
+La version pré-production de creme doit être fonctionnelle. Il n'y a
+plus qu'à tester.
 
 Passage en production
 ---------------------
@@ -479,8 +479,8 @@ creme@raspberry:~ $ ln -s ~/creme_crm-2.1 ~/creme_crm
 ```
 
 En enlevant la configuration de pré-production des fichiers de
-configuration, notamment la variable [URL\_PREFIX]{.title-ref} de
-[local\_settings.py]{.title-ref}.
+configuration, notamment la variable `URL\_PREFIX` de
+`local\_settings.py`.
 
 Prenons en compte les modifications de la configuration dans les
 fichiers media :
@@ -491,7 +491,7 @@ creme@raspberry:~/creme_crm $ source ../../.Envs/creme/bin/activate
 ```
 
 La version « production » de creme doit être maintenant fonctionnelle.
-il suffit donc de relancer les services avec [systemctl]{.title-ref}.
+il suffit donc de relancer les services avec `systemctl`.
 
 Attention toutefois à la base de données : la base de production et
 celle de pré-production sont différentes. Si la production et la
