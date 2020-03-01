@@ -63,6 +63,11 @@ fichiers media optimisés :
 
 Installer nginx en frontal web et pour gérer le SSL.
 
+``` {.bash}
+pi@raspberry:~ $ # depuis l'utilisateur pi qui est dans le groupe sudo
+pi@raspberry:~ $ sudo apt-get install nginx
+```
+
 Attention, je n'ai pu faire fonctionner nginx qu'en configurant
 `accept_mutex` sur `off` sur mon raspberry. :
 
@@ -215,7 +220,7 @@ safe-pidfile    = /run/creme/uwsgi.pid
 ```
 
 S'assurer de disposer d'un fichier
-`[/home/creme/creme\_crm/creme/wsgi.py` (c'est le fichier
+`[/home/creme/creme_crm/creme/wsgi.py` (c'est le fichier
 *module* du fichier de configuration ci-dessus). S'il n'est pas
 présent, voici le contenu du mien :
 
@@ -265,10 +270,8 @@ LOCAL_MIDDLEWARE = [
 ]
 ```
 
-Dans le fichier `creme/settings.py`, ajouter les lignes suivantes
-
-:   en fin de fichier pour prendre en compte la variable de
-    `creme/local_settings.py` :
+Dans le fichier `creme/settings.py`, ajouter les lignes suivantes en fin de
+fichier pour prendre en compte la variable de `creme/local_settings.py` :
 
 ``` {.python}
 MIDDLEWARE = MIDDLEWARE + LOCAL_MIDDLEWARE
@@ -345,14 +348,12 @@ pi@raspberry:~ $ sudo systemctl start uwsgi.service
 pi@raspberry:~ $ sudo systemctl start nginx.service
 ```
 
-Installation d'une version pour pré-production
-===============================================
+## Installation d'une version pour pré-production
 
 Afin de tester une nouvelle version de creme avant sa mise en
 production, j'ai mis en place la configuration suivante.
 
-liens symboliques pré-production
---------------------------------
+### liens symboliques pré-production
 
 Nous avons déjà mis en place des liens symboliques pour la production.
 Mettons ceux pour la pré-production (supposons pour une version 2.1 de
@@ -364,8 +365,7 @@ creme@raspberry:~ $ source ~/.Envs/creme_preprod/bin/activate
 (creme_preprod)creme@raspberry:~ $ ln -s creme_crm-2.1 creme_preprod
 ```
 
-Modification des fichiers de configuration
-------------------------------------------
+### Modification des fichiers de configuration
 
 Je garde un seul frontal nginx, mais qui dessert deux uwsgi. Le site de
 pré-production a la même adresse mais est préfixé par
@@ -404,8 +404,8 @@ creme@raspberry:~ $ cat /home/creme/nginx/nginx.conf
     }
 ```
 
-Il faut dupliquer le fichier `uwsgi/creme\_uwsgi.ini` vers
-`uwsgi/creme\_uwsgi\_preprod.conf` et modifier le contenu de
+Il faut dupliquer le fichier `uwsgi/creme_uwsgi.ini` vers
+`uwsgi/creme_uwsgi_preprod.conf` et modifier le contenu de
 ce nouveau fichier comme ceci :
 
 ``` {.bash}
@@ -425,12 +425,10 @@ vacuum          = true
 safe-pidfile    = /run/creme/uwsgi_preprod.pid
 ```
 
-Modification de creme/django
-----------------------------
+### Modification de creme/django
 
-Modifions creme/django pour utiliser un préfixe `preprod/`
-dans les urls. Dans le fichier `creme/local\_settings.py`,
-on ajoute les lignes suivantes :
+Modifions creme/django pour utiliser un préfixe `preprod/` dans les urls. Dans
+le fichier `creme/local_settings.py`, on ajoute les lignes suivantes :
 
 ``` {.bash}
 creme@raspberry:~ $ tail -n 8 /home/creme/creme_preprod/creme/local_settings.py
@@ -454,8 +452,7 @@ if settings.URL_PREFIX:
     urlpatterns = [path(r'{prefix}/'.format(prefix=settings.URL_PREFIX), include(urlpatterns))]
 ```
 
-Regénération des fichiers média
--------------------------------
+### Regénération des fichiers média
 
 Prenons en compte les modifications de la configuration :
 
@@ -466,8 +463,7 @@ Prenons en compte les modifications de la configuration :
 La version pré-production de creme doit être fonctionnelle. Il n'y a
 plus qu'à tester.
 
-Passage en production
----------------------
+### Passage en production
 
 Le passage en production se fait en basculant les liens symboliques vers
 les versions des environnements virtuels et de creme :
@@ -479,8 +475,8 @@ creme@raspberry:~ $ ln -s ~/creme_crm-2.1 ~/creme_crm
 ```
 
 En enlevant la configuration de pré-production des fichiers de
-configuration, notamment la variable `URL\_PREFIX` de
-`local\_settings.py`.
+configuration, notamment la variable `URL_PREFIX` de
+`local_settings.py`.
 
 Prenons en compte les modifications de la configuration dans les
 fichiers media :

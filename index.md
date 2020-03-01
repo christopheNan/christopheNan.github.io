@@ -16,7 +16,7 @@ conviviale que les mots de passe.
 [Installation du CRM Creme sur un Raspberry Pi 3 avec utilisation de
 certificats clients pour l'authentification automatique](./installation_creme).
 
-# Programmation Python
+## Programmation Python
 
 Avec un Raspberry Pi :
 [Surveillance de l'ouverture d'une porte de garage](https://github.com/christopheNan/garage).
