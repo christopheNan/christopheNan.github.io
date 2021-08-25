@@ -47,11 +47,11 @@ pi@raspberry:~ $ sudo apt-get upgrade
 Envoi de mails
 --------------
 
-avec ssmtp
-~~~~~~~~~~
+### avec ssmtp
 
 Très simple mais ne comporte pas de tampon, donc le message est perdu s'il
-n'y a pas de connectivité Internet par exemple
+n'y a pas de connectivité Internet par exemple.
+
 
 ``` {.bash}
 pi@raspberry:~ $ sudo apt-get install ssmtp
@@ -74,8 +74,7 @@ rewriteDomain=mon-domaine
 hostname=nomdemamachine
 ```
 
-avec postfix
-~~~~~~~~~~~~
+### avec postfix
 
 Moins simple, mais les mails sont conservés le temps que la machine arrive
 à les envoyer.
@@ -85,6 +84,11 @@ On utilise une configuration en relais pur.
 
 ``` {.bash}
 pi@raspberry:~ $ sudo apt-get install postfix libsasl2-modules
+```
+
+-   configurer postfix
+
+``` {.bash}
 pi@raspberry:~ $ sudo cat /etc/postfix/main.cf
 relayhost = [smtp.gmail.com]:587
 smtp_use_tls = yes
@@ -95,10 +99,16 @@ smtp_sasl_password_maps = hash:/etc/postfix/sasl/sasl_passwd
 smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
 # Enable STARTTLS encryption
 smtp_tls_security_level = encrypt
+
 pi@raspberry:~ $ sudo cat /etc/postfix/sasl/sasl_passwd
 [smtp.gmail.com]:587    username@gmail.com:password
 
 pi@raspberry:~ $
+```
+-    compiler les fichiers de mots de passe
+
+``` {.bash}
+pi@raspberry:~ $ sudo postmap /etc/postfix/sasl/sasl_passwd
 ```
 
 
